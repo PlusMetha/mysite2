@@ -46,6 +46,21 @@
   <button type="submit">Send</button>
 </form>
 <hr>
+
+<h2>Nationalize API Demo</h2>
+<form id="nameForm">
+    <label for="name">Enter your name:</label>
+    <input type="text" id="name" name="name" required>
+    <button type="button" onclick="fetchNationality()">Submit</button>
+</form>
+<div id="result"></div>
+<hr>
+
+<h2>Coinbase API Demo</h2>
+<div id="lastUpdateTime"></div>
+<div id="prices"></div>
+<hr>
+
 <iframe width="100%" height="400" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQQdHjGotjFIDZ0NfRvdUibFd9WnZyGTBWnyCZs8IP9WXwbqcO-yepAGxbL1GwrXs0ZZXHSGvxb_dTa/pubchart?oid=812684166&amp;format=interactive"></iframe>
 
 <hr>
@@ -99,6 +114,84 @@
                     console.error('Error fetching random dog:', error);
                 });
         }
+</script>
+
+<script>
+  function fetchNationality() {
+      var name = document.getElementById('name').value;
+      if (name.trim() === "") {
+          alert("Please enter a name");
+          return;
+      }
+
+      fetch(`https://api.nationalize.io?name=${name}`)
+          .then(response => response.json())
+          .then(data => {
+              displayResult(data);
+          })
+          .catch(error => {
+              console.error('Error fetching data:', error);
+              alert('Error fetching data. Please try again.');
+          });
+  }
+
+  function displayResult(data) {
+      var resultDiv = document.getElementById('result');
+      var countryData = data.country[0];
+
+      if (countryData) {
+          var countryId = countryData.country_id;
+          var probability = (countryData.probability * 100).toFixed(2);
+          resultDiv.innerHTML = `<p>Your most likely country is ${countryId} with a probability of ${probability}%.</p>`;
+      } else {
+          resultDiv.innerHTML = "<p>No data available for the provided name.</p>";
+      }
+  }
+</script>
+
+<script>
+  function fetchPrices() {
+      var now = new Date();
+      var currentTime = now.toLocaleTimeString();
+
+      fetch('https://api.coinbase.com/v2/exchange-rates?currency=USDT')
+          .then(response => response.json())
+          .then(data => {
+              displayPrices(data);
+              displayLastUpdateTime(currentTime);
+          })
+          .catch(error => {
+              console.error('Error fetching data:', error);
+              alert('Error fetching data. Please try again.');
+          });
+  }
+  function displayPrices(data) {
+      var pricesDiv = document.getElementById('prices');
+      var rates = data.data.rates;
+
+      var currencies = ['1INCH', 'AAVE', 'ABT', 'ACH', 'ACS', 'ADA', 'AED', 'BTC', 'ETH'];
+      var pricesHtml = '<p>1 USDT can buy:</p><ul>';
+
+      currencies.forEach(currency => {
+          if (rates[currency]) {
+              pricesHtml += `<li>${currency}: ${rates[currency]}</li>`;
+          } else {
+              pricesHtml += `<li>${currency}: N/A</li>`;
+          }
+      });
+
+      pricesHtml += '</ul>';
+      pricesDiv.innerHTML = pricesHtml;
+  }
+
+  function displayLastUpdateTime(currentTime) {
+      var updateTimeDiv = document.getElementById('lastUpdateTime');
+      updateTimeDiv.innerHTML = `<p>Last Update Time: ${currentTime}</p>`;
+  }
+
+  fetchPrices();
+
+  setInterval(fetchPrices, 3000);
 </script>
 
 </body>
